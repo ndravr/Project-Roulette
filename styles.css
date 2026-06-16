@@ -1,4 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Bangers&family=Luckiest+Guy&display=swap");
+@font-face {
+  font-family: "Astromeda";
+  src: url("name_shuffle_font/Astromeda.ttf") format("truetype");
+  font-display: swap;
+}
 
 :root {
   color-scheme: dark;
@@ -15,8 +19,8 @@
   --violet: #9a57ff;
   --danger: #ff4f4f;
   --app-font: "Trebuchet MS", Arial, sans-serif;
-  --title-font: "Luckiest Guy", "Cooper Black", "Arial Black", fantasy;
-  --name-font: "Luckiest Guy", "Cooper Black", "Arial Black", fantasy;
+  --title-font: "Astromeda", "Cooper Black", "Arial Black", fantasy;
+  --name-font: "Astromeda", "Cooper Black", "Arial Black", fantasy;
 }
 
 * {
@@ -148,8 +152,7 @@ button:disabled {
   box-shadow: 0 0 0 1px rgba(183, 255, 42, 0.2), 0 0.9rem 1.8rem rgba(0, 0, 0, 0.25);
 }
 
-.list-tile-main,
-.tile-rename {
+.list-tile-main {
   min-height: 2.5rem;
   border-radius: 8px;
 }
@@ -175,18 +178,8 @@ button:disabled {
   font-weight: 700;
 }
 
-.list-tile-main:hover,
-.tile-rename:hover,
-.file-button:hover {
+.list-tile-main:hover {
   transform: translateY(-1px);
-}
-
-.tile-rename {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--ink);
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
 .empty-library {
@@ -257,12 +250,6 @@ input[type="range"] {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.load-error {
-  min-height: 1.4rem;
-  margin: 0;
-  color: #ffb0b0;
-}
-
 .file-button {
   display: inline-grid;
   min-height: 2.75rem;
@@ -329,14 +316,6 @@ input[type="range"] {
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
     rgba(8, 9, 11, 0.72);
   background-size: 2.5rem 2.5rem;
-}
-
-.stage::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(transparent 0 48%, rgba(38, 219, 255, 0.08) 49% 51%, transparent 52%);
 }
 
 .blaster-wrap {
@@ -553,6 +532,7 @@ input[type="range"] {
 .target-zone {
   position: relative;
   display: grid;
+  gap: 1rem;
   place-items: center;
   min-width: 0;
   min-height: clamp(10rem, 38vh, 21rem);
@@ -587,6 +567,22 @@ input[type="range"] {
   opacity: 0;
   transform: scale(0.82);
   transition: opacity 120ms ease-out, transform 120ms ease-out;
+}
+
+.fortune {
+  position: relative;
+  z-index: 1;
+  width: min(34rem, 100%);
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(7, 10, 14, 0.72);
+  color: #d8e2f3;
+  font-size: clamp(0.92rem, 1.7vw, 1rem);
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: 0 0.8rem 1.8rem rgba(0, 0, 0, 0.24);
 }
 
 .burst {

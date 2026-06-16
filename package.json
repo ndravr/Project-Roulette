@@ -1,0 +1,53 @@
+{
+  "name": "shuffle-desktop",
+  "version": "0.2.0",
+  "private": true,
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path dist/lists) { Remove-Item dist/lists -Recurse -Force }; Copy-Item lists dist/lists -Recurse\""
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "local.shuffle.desktop",
+    "productName": "Shuffle",
+    "files": [
+      "index.html",
+      "script.js",
+      "styles.css",
+      "gun_idle.png",
+      "gun_fire.gif",
+      "build/icon.ico",
+      "name_shuffle_font/**/*",
+      "desktop/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "lists",
+        "to": "lists",
+        "filter": [
+          "**/*.txt"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false,
+      "target": [
+        "dir",
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "Shuffle ${version}.exe"
+    },
+    "compression": "store",
+    "asar": true,
+    "npmRebuild": false,
+    "nodeGypRebuild": false
+  }
+}

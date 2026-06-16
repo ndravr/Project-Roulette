@@ -10,7 +10,7 @@
     <main class="app-shell">
       <section id="setup" class="setup-panel" aria-labelledby="setup-title">
         <div class="setup-copy">
-          <p class="eyebrow">v0.1</p>
+          <p class="eyebrow">v0.2</p>
           <h1
             id="setup-title"
             style="
@@ -29,11 +29,8 @@
           <div class="section-head">
             <div>
               <p class="section-kicker">Team lists</p>
+              <h2 id="list-library-title">Available lists</h2>
             </div>
-            <label class="file-button">
-              Load new team list
-              <input id="nameFileInput" type="file" accept=".txt,text/plain">
-            </label>
           </div>
           <div id="listTiles" class="list-tiles" role="list"></div>
           <p id="fileStatus" class="file-status" role="status"></p>
@@ -54,7 +51,6 @@
         <button id="startButton" class="primary-button" type="button" disabled>
           Start round
         </button>
-        <p id="loadError" class="load-error" role="status"></p>
       </section>
 
       <section id="arena" class="arena is-hidden" aria-label="Name blaster arena">
@@ -74,6 +70,7 @@
 
           <div class="target-zone">
             <div id="currentName" class="target-name" aria-live="polite">READY</div>
+            <div id="fortune" class="fortune" aria-live="polite">Loading fortune...</div>
             <div id="burst" class="burst" aria-hidden="true"></div>
           </div>
         </div>

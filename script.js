@@ -5,8 +5,6 @@ const mercyValue = document.querySelector("#mercyValue");
 const loadedCount = document.querySelector("#loadedCount");
 const sparedCount = document.querySelector("#sparedCount");
 const startButton = document.querySelector("#startButton");
-const loadError = document.querySelector("#loadError");
-const nameFileInput = document.querySelector("#nameFileInput");
 const fileStatus = document.querySelector("#fileStatus");
 const listTiles = document.querySelector("#listTiles");
 const counter = document.querySelector("#counter");
@@ -15,33 +13,16 @@ const fireButton = document.querySelector("#fireButton");
 let blasterImage = document.querySelector("#blasterImage");
 const shotBeam = document.querySelector("#shotBeam");
 const currentName = document.querySelector("#currentName");
+const fortune = document.querySelector("#fortune");
 const burst = document.querySelector("#burst");
 const nameQueue = document.querySelector("#nameQueue");
 
-const STORAGE_KEY = "shuffle.teamLists.v1";
-const ACTIVE_LIST_KEY = "shuffle.activeListId.v1";
 const IDLE_GUN_SRC = "gun_idle.png";
 const FIRING_GUN_SRC = "gun_fire.gif";
+const FORTUNE_URL = "https://raw.githubusercontent.com/reggi/fortune-cookie/master/fortune-cookie.json";
 const FIRE_ANIMATION_MS = 1000;
 const PROJECTILE_DELAY_MS = 420;
 const EXPLOSION_MS = 820;
-
-const fallbackNames = [
-  "ABCD",
-  "BDESD",
-  "KORMA",
-  "ZENTH",
-  "PLIKS",
-  "NURVO",
-  "TALEN",
-  "MERIX",
-  "JADON",
-  "VEXLA",
-  "QORIN",
-  "LUMEK",
-  "SADRO",
-  "FENIX"
-];
 
 let allNames = [];
 let shuffledNames = [];
@@ -52,6 +33,10 @@ let shotSequence = 0;
 let namesSourceLabel = "";
 let teamLists = [];
 let activeListId = "";
+let fortuneLoadPromise = null;
+let fortuneMessages = [];
+let fortuneSequence = 0;
+let roundComplete = false;
 
 const firingGunPreload = new Image();
 firingGunPreload.src = FIRING_GUN_SRC;
@@ -82,50 +67,17 @@ function cleanNames(text) {
     .filter((name) => name && !name.startsWith("#"));
 }
 
-function slugifyLabel(value) {
-  return value
-    .toLowerCase()
-    .replace(/\.[^/.]+$/, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "") || "team-list";
-}
-
-function createListRecord(label, names, originalFileName = "") {
-  const trimmedLabel = label.trim() || "Untitled list";
-
-  return {
-    id: `${slugifyLabel(trimmedLabel)}-${Date.now()}`,
-    label: trimmedLabel,
-    originalFileName,
-    names
-  };
-}
-
-function saveLibrary() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(teamLists));
-  localStorage.setItem(ACTIVE_LIST_KEY, activeListId);
-}
-
-function readLibrary() {
-  try {
-    const storedLists = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-
-    if (!Array.isArray(storedLists)) {
-      return [];
-    }
-
-    return storedLists
-      .filter((list) => list && Array.isArray(list.names) && list.names.length)
-      .map((list) => ({
-        id: String(list.id || `${slugifyLabel(list.label || "team-list")}-${Date.now()}`),
-        label: String(list.label || "Untitled list"),
-        originalFileName: String(list.originalFileName || ""),
-        names: list.names.map((name) => String(name))
-      }));
-  } catch (error) {
-    console.warn("Could not read saved team lists.", error);
-    return [];
-  }
+function clearSelectionState() {
+  allNames = [];
+  namesSourceLabel = "";
+  mercySlider.disabled = true;
+  mercySlider.min = "1";
+  mercySlider.max = "1";
+  mercySlider.value = "1";
+  mercyValue.textContent = "0 / 0";
+  loadedCount.textContent = "No team list selected";
+  sparedCount.textContent = "0 visible";
+  startButton.disabled = true;
 }
 
 function setNames(names, sourceLabel) {
@@ -133,6 +85,104 @@ function setNames(names, sourceLabel) {
   namesSourceLabel = sourceLabel;
   shuffledNames = shuffle(allNames);
   configureMercySlider();
+}
+
+async function ensureFortunesLoaded() {
+  if (fortuneMessages.length) {
+    return fortuneMessages;
+  }
+
+  if (!fortuneLoadPromise) {
+    fortuneLoadPromise = fetch(FORTUNE_URL)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`fortune source returned ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((messages) => {
+        if (!Array.isArray(messages) || !messages.length) {
+          throw new Error("fortune source was empty");
+        }
+
+        fortuneMessages = messages.filter((message) => typeof message === "string" && message.trim());
+        return fortuneMessages;
+      });
+  }
+
+  return fortuneLoadPromise;
+}
+
+async function loadFortune() {
+  fortuneSequence += 1;
+  const currentFortuneSequence = fortuneSequence;
+  fortune.textContent = "Loading fortune...";
+
+  try {
+    const fortunes = await ensureFortunesLoaded();
+    const randomIndex = Math.floor(Math.random() * fortunes.length);
+
+    if (currentFortuneSequence !== fortuneSequence) {
+      return;
+    }
+
+    fortune.textContent = fortunes[randomIndex];
+  } catch {
+    if (currentFortuneSequence !== fortuneSequence) {
+      return;
+    }
+
+    fortune.textContent = "The cookie crumbled before JSON.parse().";
+  }
+}
+
+function applyLoadedTeamLists(loadedLists) {
+  teamLists = loadedLists;
+
+  if (!teamLists.length) {
+    activeListId = "";
+    clearSelectionState();
+    renderTiles();
+    fileStatus.textContent = "";
+    return;
+  }
+
+  if (!teamLists.some((list) => list.id === activeListId)) {
+    activeListId = teamLists[0].id;
+  }
+
+  renderTiles();
+  updateSelectionState();
+  fileStatus.textContent = `${teamLists.length} list${teamLists.length === 1 ? "" : "s"} loaded from /lists`;
+}
+
+async function loadDesktopTeamLists() {
+  const loadedFiles = await window.shuffleDesktop.readTeamLists();
+
+  applyLoadedTeamLists(
+    loadedFiles
+      .map((file) => ({
+        id: file.fileName,
+        fileName: file.fileName,
+        label: file.fileName,
+        names: cleanNames(file.text)
+      }))
+      .filter((list) => list.names.length)
+  );
+}
+
+async function loadTeamLists() {
+  if (!window.shuffleDesktop) {
+    applyLoadedTeamLists([]);
+    return;
+  }
+
+  try {
+    await loadDesktopTeamLists();
+  } catch {
+    applyLoadedTeamLists([]);
+  }
 }
 
 function getActiveList() {
@@ -143,16 +193,7 @@ function updateSelectionState() {
   const activeList = getActiveList();
 
   if (!activeList) {
-    allNames = [];
-    namesSourceLabel = "";
-    mercySlider.disabled = true;
-    mercySlider.min = "1";
-    mercySlider.max = "1";
-    mercySlider.value = "1";
-    mercyValue.textContent = "0 / 0";
-    loadedCount.textContent = "No team list selected";
-    sparedCount.textContent = "0 visible";
-    startButton.disabled = true;
+    clearSelectionState();
     return;
   }
 
@@ -166,7 +207,7 @@ function renderTiles() {
     const empty = document.createElement("p");
 
     empty.className = "empty-library";
-    empty.textContent = "No saved team lists yet. Load a .txt file to create your first tile.";
+    empty.textContent = "Nothing to display.";
     listTiles.appendChild(empty);
     return;
   }
@@ -176,7 +217,6 @@ function renderTiles() {
     const tileButton = document.createElement("button");
     const title = document.createElement("strong");
     const meta = document.createElement("span");
-    const renameButton = document.createElement("button");
 
     article.className = "list-tile";
     if (list.id === activeListId) {
@@ -185,120 +225,19 @@ function renderTiles() {
 
     tileButton.type = "button";
     tileButton.className = "list-tile-main";
-    tileButton.addEventListener("click", () => {
+    tileButton.addEventListener("click", async () => {
       activeListId = list.id;
-      saveLibrary();
       updateSelectionState();
       renderTiles();
-      fileStatus.textContent = `Loaded team list: ${list.label}`;
-      loadError.textContent = "";
+      fileStatus.textContent = `Loaded team list: ${list.fileName}`;
     });
 
-    title.textContent = list.label;
+    title.textContent = list.fileName;
     meta.textContent = `${list.names.length} names`;
     tileButton.append(title, meta);
-
-    renameButton.type = "button";
-    renameButton.className = "tile-rename";
-    renameButton.textContent = "Rename";
-    renameButton.addEventListener("click", () => renameList(list.id));
-
-    article.append(tileButton, renameButton);
+    article.append(tileButton);
     listTiles.appendChild(article);
   });
-}
-
-function renameList(listId) {
-  const list = teamLists.find((entry) => entry.id === listId);
-
-  if (!list) {
-    return;
-  }
-
-  const nextLabel = window.prompt("Rename team list", list.label);
-
-  if (!nextLabel) {
-    return;
-  }
-
-  list.label = nextLabel.trim() || list.label;
-  saveLibrary();
-  updateSelectionState();
-  renderTiles();
-  fileStatus.textContent = `Renamed tile to: ${list.label}`;
-}
-
-function addListToLibrary(record, { persist = true, select = true } = {}) {
-  teamLists.push(record);
-
-  if (select) {
-    activeListId = record.id;
-  }
-
-  if (persist) {
-    saveLibrary();
-  }
-
-  updateSelectionState();
-  renderTiles();
-}
-
-async function loadNamesFromFile(file) {
-  if (!file) {
-    return;
-  }
-
-  try {
-    const names = cleanNames(await file.text());
-
-    if (!names.length) {
-      throw new Error("No names found");
-    }
-
-    const label = file.name.replace(/\.[^/.]+$/, "") || file.name;
-    const record = createListRecord(label, names, file.name);
-
-    addListToLibrary(record);
-    fileStatus.textContent = `Added tile: ${record.label}`;
-    loadError.textContent = "";
-    nameFileInput.value = "";
-  } catch (error) {
-    fileStatus.textContent = `Could not load names from ${file.name}. ${error.message}`;
-  }
-}
-
-async function loadDefaultWorkspaceList() {
-  if (window.location.protocol === "file:") {
-    if (!teamLists.length) {
-      addListToLibrary(createListRecord("Sample list", fallbackNames), { persist: false });
-      fileStatus.textContent = "Sample list loaded. Use Load new team list to add permanent tiles in this browser.";
-    }
-    return;
-  }
-
-  try {
-    const response = await fetch(`list.txt?cache=${Date.now()}`);
-
-    if (!response.ok) {
-      throw new Error(`list.txt returned ${response.status}`);
-    }
-
-    const names = cleanNames(await response.text());
-
-    if (!names.length) {
-      throw new Error("list.txt has no names");
-    }
-
-    if (!teamLists.length) {
-      addListToLibrary(createListRecord("list", names, "list.txt"), { persist: true });
-      fileStatus.textContent = "Workspace list.txt added as a home tile.";
-    }
-  } catch (error) {
-    if (!teamLists.length) {
-      addListToLibrary(createListRecord("Sample list", fallbackNames), { persist: false });
-      loadError.textContent = `Could not read list.txt. ${error.message}`;
-    }
-  }
 }
 
 function configureMercySlider() {
@@ -324,6 +263,11 @@ function updateMercyDisplay() {
   sparedCount.textContent = `${selected} visible`;
 }
 
+function updateFireButton() {
+  fireButton.textContent = roundComplete ? "Go to Home" : "Fire next";
+  fireButton.disabled = isFiring;
+}
+
 function startRound() {
   if (!allNames.length) {
     return;
@@ -333,6 +277,7 @@ function startRound() {
   activeNames = [...shuffledNames];
   currentIndex = 0;
   isFiring = false;
+  roundComplete = false;
   shotSequence += 1;
   burst.innerHTML = "";
   blasterImage.src = IDLE_GUN_SRC;
@@ -348,11 +293,13 @@ function resetRound() {
   setup.classList.remove("is-hidden");
   currentName.classList.remove("is-hit", "is-hidden-target");
   currentName.textContent = "READY";
+  fortune.textContent = "Pick a team list to get a fortune.";
   burst.innerHTML = "";
   blasterImage.src = IDLE_GUN_SRC;
-  fireButton.disabled = false;
   isFiring = false;
+  roundComplete = false;
   shotSequence += 1;
+  updateFireButton();
 }
 
 function renderRound({ resetTarget = true } = {}) {
@@ -366,6 +313,12 @@ function renderRound({ resetTarget = true } = {}) {
   if (resetTarget) {
     currentName.textContent = remaining.length ? remaining[0] : "The end";
     currentName.classList.remove("is-hit", "is-hidden-target");
+
+    if (remaining.length) {
+      loadFortune();
+    } else {
+      fortune.textContent = "Don't forget to log your time \u270c\uFE0F";
+    }
   }
 
   nameQueue.innerHTML = "";
@@ -380,7 +333,7 @@ function renderRound({ resetTarget = true } = {}) {
 
   if (!remaining.length) {
     counter.textContent = `${total} / ${total}`;
-    fireButton.disabled = true;
+    roundComplete = true;
     const item = document.createElement("li");
     const label = document.createElement("span");
 
@@ -388,8 +341,10 @@ function renderRound({ resetTarget = true } = {}) {
     item.appendChild(label);
     nameQueue.appendChild(item);
   } else {
-    fireButton.disabled = false;
+    roundComplete = false;
   }
+
+  updateFireButton();
 }
 
 function restartAnimation(element, className) {
@@ -439,14 +394,19 @@ function createBurst() {
 }
 
 function fireNext() {
+  if (roundComplete) {
+    resetRound();
+    return;
+  }
+
   if (isFiring || fireButton.disabled || !activeNames.length || currentIndex >= activeNames.length) {
     return;
   }
 
   isFiring = true;
+  updateFireButton();
   shotSequence += 1;
   const currentShot = shotSequence;
-  fireButton.disabled = true;
   currentName.textContent = activeNames[currentIndex];
   counter.textContent = `${Math.min(currentIndex + 1, activeNames.length)} / ${activeNames.length}`;
   currentName.classList.remove("is-hit", "is-hidden-target");
@@ -486,9 +446,6 @@ mercySlider.addEventListener("input", updateMercyDisplay);
 startButton.addEventListener("click", startRound);
 resetButton.addEventListener("click", resetRound);
 fireButton.addEventListener("click", fireNext);
-nameFileInput.addEventListener("change", (event) => {
-  loadNamesFromFile(event.target.files[0]);
-});
 
 document.addEventListener("keydown", (event) => {
   const setupVisible = !setup.classList.contains("is-hidden");
@@ -512,17 +469,6 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-teamLists = readLibrary();
-activeListId = localStorage.getItem(ACTIVE_LIST_KEY) || "";
-
-if (activeListId && !teamLists.some((list) => list.id === activeListId)) {
-  activeListId = "";
-}
-
-if (!activeListId && teamLists[0]) {
-  activeListId = teamLists[0].id;
-}
-
+clearSelectionState();
 renderTiles();
-updateSelectionState();
-loadDefaultWorkspaceList();
+loadTeamLists();
