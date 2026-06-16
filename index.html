@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shuffle</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="setup" class="setup-panel" aria-labelledby="setup-title">
+        <div class="setup-copy">
+          <p class="eyebrow">v0.1</p>
+          <h1
+            id="setup-title"
+            style="
+              --title-left: #ff5e7e;
+              --title-center: #ffe27a;
+              --title-right: #54ecff;
+              --title-center-start: 40%;
+              --title-center-end: 60%;
+            "
+          >
+            Shuffle
+          </h1>
+        </div>
+
+        <section class="list-library" aria-labelledby="list-library-title">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Team lists</p>
+            </div>
+            <label class="file-button">
+              Load new team list
+              <input id="nameFileInput" type="file" accept=".txt,text/plain">
+            </label>
+          </div>
+          <div id="listTiles" class="list-tiles" role="list"></div>
+          <p id="fileStatus" class="file-status" role="status"></p>
+        </section>
+
+        <div class="mercy-card">
+          <div class="mercy-header">
+            <span>Mercy level</span>
+            <strong id="mercyValue">0 / 0</strong>
+          </div>
+          <input id="mercySlider" type="range" min="1" max="1" value="1" disabled>
+          <div class="mercy-footer">
+            <span id="loadedCount">No team list selected</span>
+            <span id="sparedCount">0 visible</span>
+          </div>
+        </div>
+
+        <button id="startButton" class="primary-button" type="button" disabled>
+          Start round
+        </button>
+        <p id="loadError" class="load-error" role="status"></p>
+      </section>
+
+      <section id="arena" class="arena is-hidden" aria-label="Name blaster arena">
+        <header class="top-bar">
+          <div id="counter" class="counter">0 / 0</div>
+          <button id="resetButton" class="ghost-button" type="button">Reset</button>
+        </header>
+
+        <div class="stage">
+          <div class="blaster-wrap" aria-hidden="true">
+            <div id="blaster" class="blaster">
+              <img id="blasterImage" class="blaster-gif" src="gun_idle.png" alt="">
+              <div id="muzzleFlash" class="muzzle-flash"></div>
+              <div id="shotBeam" class="shot-beam"></div>
+            </div>
+          </div>
+
+          <div class="target-zone">
+            <div id="currentName" class="target-name" aria-live="polite">READY</div>
+            <div id="burst" class="burst" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <aside class="queue-panel" aria-labelledby="queue-title">
+          <h2 id="queue-title">Up next...</h2>
+          <ol id="nameQueue" class="name-queue"></ol>
+        </aside>
+
+        <footer class="controls">
+          <button id="fireButton" class="primary-button fire-button" type="button">
+            Fire next
+          </button>
+          <div class="key-hints">
+            <span><kbd>Space</kbd> / <kbd>Enter</kbd> Fire</span>
+            <span><kbd>Q</kbd> / <kbd>Esc</kbd> Quit</span>
+          </div>
+        </footer>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
