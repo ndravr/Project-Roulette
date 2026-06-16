@@ -15,6 +15,7 @@ const fireButton = document.querySelector("#fireButton");
 let blasterImage = document.querySelector("#blasterImage");
 const shotBeam = document.querySelector("#shotBeam");
 const currentName = document.querySelector("#currentName");
+const fortune = document.querySelector("#fortune");
 const burst = document.querySelector("#burst");
 const nameQueue = document.querySelector("#nameQueue");
 
@@ -52,6 +53,8 @@ let shotSequence = 0;
 let namesSourceLabel = "";
 let teamLists = [];
 let activeListId = "";
+let roundComplete = false;
+let jokeSequence = 0;
 
 const firingGunPreload = new Image();
 firingGunPreload.src = FIRING_GUN_SRC;
@@ -313,6 +316,40 @@ function configureMercySlider() {
   updateMercyDisplay();
 }
 
+function updateFireButton() {
+  fireButton.textContent = roundComplete ? "Go to Home" : "Fire next";
+  fireButton.disabled = isFiring;
+}
+
+async function loadFortune() {
+  jokeSequence += 1;
+  const currentJoke = jokeSequence;
+
+  fortune.textContent = "Loading your dev fortune...";
+
+  try {
+    const response = await fetch("https://v2.jokeapi.dev/joke/Programming?safe-mode");
+    const data = await response.json();
+
+    if (currentJoke !== jokeSequence) {
+      return;
+    }
+
+    if (data.type === "single") {
+      fortune.textContent = data.joke;
+      return;
+    }
+
+    fortune.textContent = `${data.setup} ${data.delivery}`;
+  } catch {
+    if (currentJoke !== jokeSequence) {
+      return;
+    }
+
+    fortune.textContent = "Today's fortune: the API failed, but at least it was not production.";
+  }
+}
+
 function updateMercyDisplay() {
   const total = allNames.length;
   const selected = total ? Math.min(Number(mercySlider.value), total) : 0;
@@ -333,6 +370,7 @@ function startRound() {
   activeNames = [...shuffledNames];
   currentIndex = 0;
   isFiring = false;
+  roundComplete = false;
   shotSequence += 1;
   burst.innerHTML = "";
   blasterImage.src = IDLE_GUN_SRC;
@@ -348,11 +386,13 @@ function resetRound() {
   setup.classList.remove("is-hidden");
   currentName.classList.remove("is-hit", "is-hidden-target");
   currentName.textContent = "READY";
+  fortune.textContent = "Pick a tile and start another round.";
   burst.innerHTML = "";
   blasterImage.src = IDLE_GUN_SRC;
-  fireButton.disabled = false;
   isFiring = false;
+  roundComplete = false;
   shotSequence += 1;
+  updateFireButton();
 }
 
 function renderRound({ resetTarget = true } = {}) {
@@ -366,6 +406,12 @@ function renderRound({ resetTarget = true } = {}) {
   if (resetTarget) {
     currentName.textContent = remaining.length ? remaining[0] : "The end";
     currentName.classList.remove("is-hit", "is-hidden-target");
+
+    if (remaining.length) {
+      loadFortune();
+    } else {
+      fortune.textContent = "No more targets. Even the joke API gets to rest.";
+    }
   }
 
   nameQueue.innerHTML = "";
@@ -380,7 +426,7 @@ function renderRound({ resetTarget = true } = {}) {
 
   if (!remaining.length) {
     counter.textContent = `${total} / ${total}`;
-    fireButton.disabled = true;
+    roundComplete = true;
     const item = document.createElement("li");
     const label = document.createElement("span");
 
@@ -388,8 +434,10 @@ function renderRound({ resetTarget = true } = {}) {
     item.appendChild(label);
     nameQueue.appendChild(item);
   } else {
-    fireButton.disabled = false;
+    roundComplete = false;
   }
+
+  updateFireButton();
 }
 
 function restartAnimation(element, className) {
@@ -439,14 +487,19 @@ function createBurst() {
 }
 
 function fireNext() {
+  if (roundComplete) {
+    resetRound();
+    return;
+  }
+
   if (isFiring || fireButton.disabled || !activeNames.length || currentIndex >= activeNames.length) {
     return;
   }
 
   isFiring = true;
+  updateFireButton();
   shotSequence += 1;
   const currentShot = shotSequence;
-  fireButton.disabled = true;
   currentName.textContent = activeNames[currentIndex];
   counter.textContent = `${Math.min(currentIndex + 1, activeNames.length)} / ${activeNames.length}`;
   currentName.classList.remove("is-hit", "is-hidden-target");

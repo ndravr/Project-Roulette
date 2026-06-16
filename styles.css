@@ -553,6 +553,7 @@ input[type="range"] {
 .target-zone {
   position: relative;
   display: grid;
+  gap: 1rem;
   place-items: center;
   min-width: 0;
   min-height: clamp(10rem, 38vh, 21rem);
@@ -587,6 +588,22 @@ input[type="range"] {
   opacity: 0;
   transform: scale(0.82);
   transition: opacity 120ms ease-out, transform 120ms ease-out;
+}
+
+.fortune {
+  position: relative;
+  z-index: 1;
+  width: min(34rem, 100%);
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(7, 10, 14, 0.72);
+  color: #d8e2f3;
+  font-size: clamp(0.92rem, 1.7vw, 1rem);
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: 0 0.8rem 1.8rem rgba(0, 0, 0, 0.24);
 }
 
 .burst {
