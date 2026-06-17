@@ -326,14 +326,14 @@ input[type="range"] {
 .blaster {
   position: absolute;
   left: clamp(0.75rem, 2vw, 1.5rem);
-  top: 62%;
-  width: clamp(10.5rem, 32vw, 34rem);
-  aspect-ratio: 2 / 1;
+  top: 50%;
+  width: clamp(8.5rem, 22vw, 19rem);
+  aspect-ratio: 1;
   transform: translateY(-50%);
   transform-origin: 16% 45%;
   filter:
-    drop-shadow(0 1.5rem 1.4rem rgba(0, 0, 0, 0.42))
-    drop-shadow(0 0 1rem rgba(38, 219, 255, 0.55));
+    drop-shadow(0 1.5rem 1.4rem rgba(0, 0, 0, 0.32))
+    drop-shadow(0 0 1rem rgba(255, 184, 84, 0.42));
 }
 
 .blaster-gif {
@@ -341,8 +341,6 @@ input[type="range"] {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  image-rendering: pixelated;
-  mix-blend-mode: screen;
 }
 
 .rifle-stock,
@@ -500,10 +498,10 @@ input[type="range"] {
 
 .muzzle-flash {
   position: absolute;
-  left: 50.5%;
-  top: 26%;
-  width: 6rem;
-  height: 4.4rem;
+  left: 78%;
+  top: 55%;
+  width: clamp(2.8rem, 7vw, 5rem);
+  height: clamp(2.1rem, 5.2vw, 3.7rem);
   opacity: 0;
   clip-path: polygon(0 48%, 32% 25%, 44% 0, 58% 31%, 100% 17%, 74% 52%, 100% 86%, 57% 71%, 44% 100%, 31% 71%);
   background: radial-gradient(circle, #fff 0 20%, var(--acid) 21% 42%, var(--orange) 43% 70%, transparent 71%);
@@ -515,8 +513,8 @@ input[type="range"] {
 
 .shot-beam {
   position: absolute;
-  left: 52%;
-  top: 35.5%;
+  left: 80%;
+  top: 63%;
   width: min(45vw, 32rem);
   height: 0.4rem;
   opacity: 0;
@@ -908,8 +906,8 @@ kbd {
 
   .blaster {
     left: 50%;
-    top: 62%;
-    width: min(75vw, 24rem);
+    top: 55%;
+    width: min(56vw, 17rem);
     transform: translate(-50%, -50%);
   }
 

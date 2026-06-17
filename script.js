@@ -17,9 +17,8 @@ const fortune = document.querySelector("#fortune");
 const burst = document.querySelector("#burst");
 const nameQueue = document.querySelector("#nameQueue");
 
-const IDLE_GUN_SRC = "gun_idle.png";
-const FIRING_GUN_SRC = "gun_fire.gif";
-const FORTUNE_URL = "https://raw.githubusercontent.com/reggi/fortune-cookie/master/fortune-cookie.json";
+const IDLE_GUN_SRC = "cat.png";
+const FIRING_GUN_SRC = "cat.gif";
 const FIRE_ANIMATION_MS = 1000;
 const PROJECTILE_DELAY_MS = 420;
 const EXPLOSION_MS = 820;
@@ -35,6 +34,8 @@ let teamLists = [];
 let activeListId = "";
 let fortuneLoadPromise = null;
 let fortuneMessages = [];
+let usedFortuneMessages = new Set();
+let remainingFortuneMessages = [];
 let fortuneSequence = 0;
 let roundComplete = false;
 
@@ -93,25 +94,51 @@ async function ensureFortunesLoaded() {
   }
 
   if (!fortuneLoadPromise) {
-    fortuneLoadPromise = fetch(FORTUNE_URL)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`fortune source returned ${response.status}`);
-        }
-
-        return response.json();
-      })
+    fortuneLoadPromise = window.shuffleDesktop.readFortuneMessages()
       .then((messages) => {
         if (!Array.isArray(messages) || !messages.length) {
           throw new Error("fortune source was empty");
         }
 
-        fortuneMessages = messages.filter((message) => typeof message === "string" && message.trim());
+        fortuneMessages = [
+          ...new Set(
+            messages
+              .filter((message) => typeof message === "string")
+              .map((message) => message.trim())
+              .filter(Boolean)
+          )
+        ];
+
+        if (!fortuneMessages.length) {
+          throw new Error("fortune source was empty");
+        }
+
         return fortuneMessages;
       });
   }
 
   return fortuneLoadPromise;
+}
+
+function resetFortuneRound() {
+  usedFortuneMessages = new Set();
+  remainingFortuneMessages = [];
+  fortuneSequence += 1;
+}
+
+function pickUnusedFortune(fortunes) {
+  if (!remainingFortuneMessages.length) {
+    remainingFortuneMessages = shuffle(
+      fortunes.filter((message) => !usedFortuneMessages.has(message))
+    );
+  }
+
+  const message = remainingFortuneMessages.pop() || "";
+  if (message) {
+    usedFortuneMessages.add(message);
+  }
+
+  return message;
 }
 
 async function loadFortune() {
@@ -121,19 +148,18 @@ async function loadFortune() {
 
   try {
     const fortunes = await ensureFortunesLoaded();
-    const randomIndex = Math.floor(Math.random() * fortunes.length);
 
     if (currentFortuneSequence !== fortuneSequence) {
       return;
     }
 
-    fortune.textContent = fortunes[randomIndex];
+    fortune.textContent = pickUnusedFortune(fortunes) || "No unused fortunes left in this round.";
   } catch {
     if (currentFortuneSequence !== fortuneSequence) {
       return;
     }
 
-    fortune.textContent = "The cookie crumbled before JSON.parse().";
+    fortune.textContent = "The fortune list could not be loaded.";
   }
 }
 
@@ -278,6 +304,7 @@ function startRound() {
   currentIndex = 0;
   isFiring = false;
   roundComplete = false;
+  resetFortuneRound();
   shotSequence += 1;
   burst.innerHTML = "";
   blasterImage.src = IDLE_GUN_SRC;
@@ -298,6 +325,7 @@ function resetRound() {
   blasterImage.src = IDLE_GUN_SRC;
   isFiring = false;
   roundComplete = false;
+  resetFortuneRound();
   shotSequence += 1;
   updateFireButton();
 }

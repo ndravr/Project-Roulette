@@ -20,7 +20,7 @@ Single-file portable option:
 
 ```text
 dist/
-  Shuffle 0.2.0.exe
+  Shuffle 0.3.0.exe
   lists/
 ```
 
@@ -50,14 +50,40 @@ desktop/
 index.html      Renderer markup
 script.js       Renderer app logic
 styles.css      Renderer styles
+fortune-cookie-messages.json
 
-gun_idle.png
-gun_fire.gif
+cat.png
+cat.gif
 name_shuffle_font/
 
 lists/          Source list files
 dist/           Shareable portable output
 ```
+
+## How The App Is Generated
+
+The visible app is the web UI in `index.html`, `script.js`, and `styles.css`.
+Electron does not convert those files into a different framework. It opens
+`index.html` inside a desktop window, loads `styles.css` for the visuals, and
+runs `script.js` for the shuffle behavior.
+
+`desktop/main.js` is the Electron entry point from `package.json`. It creates
+the desktop window, loads `index.html`, and reads `.txt` files from the local
+`lists` folder. `desktop/preload.js` exposes that list-reading function safely
+to the renderer, so the web UI can use local files without a browser permission
+prompt or a background server.
+
+`npm run build` runs `electron-builder --win`. The `build.files` section in
+`package.json` tells Electron Builder which source files and assets to package:
+`index.html`, `script.js`, `styles.css`, `fortune-cookie-messages.json`,
+`cat.png`, `cat.gif`, the icon, the font, and the `desktop/` Electron files.
+The `extraFiles` section copies `lists/` beside the packaged executable so
+users can edit team lists after the app is built.
+
+Fortunes are loaded from `fortune-cookie-messages.json`, which was copied from
+the raw GitHub fortune-cookie source. During a round, the app remembers which
+fortune messages were already shown and only chooses from messages that have
+not been used in that round.
 
 ## Build
 
@@ -77,7 +103,7 @@ Output:
 
 ```text
 dist/
-  Shuffle 0.2.0.exe
+  Shuffle 0.3.0.exe
   win-unpacked/
   lists/
 ```

@@ -1,6 +1,6 @@
 {
   "name": "shuffle-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "main": "desktop/main.js",
   "scripts": {
@@ -19,8 +19,9 @@
       "index.html",
       "script.js",
       "styles.css",
-      "gun_idle.png",
-      "gun_fire.gif",
+      "fortune-cookie-messages.json",
+      "cat.png",
+      "cat.gif",
       "build/icon.ico",
       "name_shuffle_font/**/*",
       "desktop/**/*"

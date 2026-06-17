@@ -45,6 +45,17 @@ async function readTeamLists() {
   return [];
 }
 
+async function readFortuneMessages() {
+  const text = await fs.readFile(path.join(app.getAppPath(), "fortune-cookie-messages.json"), "utf8");
+  const messages = JSON.parse(text.replace(/^\uFEFF/, ""));
+
+  if (!Array.isArray(messages)) {
+    return [];
+  }
+
+  return messages;
+}
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1180,
@@ -64,6 +75,7 @@ function createWindow() {
 }
 
 ipcMain.handle("lists:read", readTeamLists);
+ipcMain.handle("fortunes:read", readFortuneMessages);
 
 app.whenReady().then(() => {
   createWindow();
