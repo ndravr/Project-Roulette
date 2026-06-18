@@ -4,6 +4,8 @@ const mercySlider = document.querySelector("#mercySlider");
 const mercyValue = document.querySelector("#mercyValue");
 const loadedCount = document.querySelector("#loadedCount");
 const sparedCount = document.querySelector("#sparedCount");
+const flavorToggle = document.querySelector("#flavorToggle");
+const flavorLabel = document.querySelector("#flavorLabel");
 const startButton = document.querySelector("#startButton");
 const fileStatus = document.querySelector("#fileStatus");
 const listTiles = document.querySelector("#listTiles");
@@ -24,6 +26,20 @@ const PROJECTILE_DELAY_MS = 420;
 const PROJECTILE_TRAVEL_MS = 832;
 const NAME_HIDE_AFTER_IMPACT_MS = 90;
 const EXPLOSION_MS = 820;
+const MESSAGE_FLAVORS = {
+  fortune: {
+    label: "Fortune",
+    loading: "Loading fortune...",
+    empty: "No unused fortunes left in this round.",
+    error: "The fortune list could not be loaded."
+  },
+  jokes: {
+    label: "Jokes",
+    loading: "Loading joke...",
+    error: "The joke API could not be reached."
+  }
+};
+const JOKE_API_URL = "https://v2.jokeapi.dev/joke/Programming?safe-mode";
 
 let allNames = [];
 let shuffledNames = [];
@@ -40,6 +56,7 @@ let usedFortuneMessages = new Set();
 let remainingFortuneMessages = [];
 let fortuneSequence = 0;
 let roundComplete = false;
+let activeMessageFlavor = "fortune";
 
 const firingGunPreload = new Image();
 firingGunPreload.src = FIRING_GUN_SRC;
@@ -143,25 +160,83 @@ function pickUnusedFortune(fortunes) {
   return message;
 }
 
+function setMessageFlavor(nextFlavor) {
+  activeMessageFlavor = nextFlavor;
+  const isJokes = activeMessageFlavor === "jokes";
+
+  flavorToggle.classList.toggle("is-jokes", isJokes);
+  flavorToggle.setAttribute("aria-pressed", String(isJokes));
+  flavorLabel.textContent = MESSAGE_FLAVORS[activeMessageFlavor].label;
+  fortuneSequence += 1;
+
+  if (!setup.classList.contains("is-hidden")) {
+    return;
+  }
+
+  if (!roundComplete && activeNames.length && currentIndex < activeNames.length) {
+    loadFortune();
+  }
+}
+
+function parseJoke(data) {
+  if (data && data.type === "single" && typeof data.joke === "string") {
+    return data.joke.trim();
+  }
+
+  if (
+    data
+    && data.type === "twopart"
+    && typeof data.setup === "string"
+    && typeof data.delivery === "string"
+  ) {
+    return `${data.setup.trim()} ${data.delivery.trim()}`.trim();
+  }
+
+  return "";
+}
+
+async function loadJoke(currentFortuneSequence) {
+  const response = await fetch(JOKE_API_URL);
+
+  if (!response.ok) {
+    throw new Error(`Joke API returned ${response.status}`);
+  }
+
+  const joke = parseJoke(await response.json());
+
+  if (currentFortuneSequence !== fortuneSequence) {
+    return;
+  }
+
+  fortune.textContent = joke || "The joke API returned an empty joke.";
+}
+
 async function loadFortune() {
   fortuneSequence += 1;
   const currentFortuneSequence = fortuneSequence;
-  fortune.textContent = "Loading fortune...";
+  const messageFlavor = activeMessageFlavor;
+
+  fortune.textContent = MESSAGE_FLAVORS[messageFlavor].loading;
 
   try {
+    if (messageFlavor === "jokes") {
+      await loadJoke(currentFortuneSequence);
+      return;
+    }
+
     const fortunes = await ensureFortunesLoaded();
 
     if (currentFortuneSequence !== fortuneSequence) {
       return;
     }
 
-    fortune.textContent = pickUnusedFortune(fortunes) || "No unused fortunes left in this round.";
+    fortune.textContent = pickUnusedFortune(fortunes) || MESSAGE_FLAVORS.fortune.empty;
   } catch {
     if (currentFortuneSequence !== fortuneSequence) {
       return;
     }
 
-    fortune.textContent = "The fortune list could not be loaded.";
+    fortune.textContent = MESSAGE_FLAVORS[messageFlavor].error;
   }
 }
 
@@ -526,6 +601,9 @@ function fireNext() {
 }
 
 mercySlider.addEventListener("input", updateMercyDisplay);
+flavorToggle.addEventListener("click", () => {
+  setMessageFlavor(activeMessageFlavor === "fortune" ? "jokes" : "fortune");
+});
 startButton.addEventListener("click", startRound);
 resetButton.addEventListener("click", resetRound);
 fireButton.addEventListener("click", fireNext);
@@ -553,5 +631,6 @@ document.addEventListener("keydown", (event) => {
 });
 
 clearSelectionState();
+setMessageFlavor("fortune");
 renderTiles();
 loadTeamLists();

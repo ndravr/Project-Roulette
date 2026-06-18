@@ -189,6 +189,7 @@ button:disabled {
   line-height: 1.5;
 }
 
+.flavor-card,
 .mercy-card {
   display: grid;
   gap: 0.85rem;
@@ -197,6 +198,51 @@ button:disabled {
   border-radius: 8px;
   background: rgba(18, 20, 25, 0.86);
   box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.28);
+}
+
+.flavor-card {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.flavor-toggle {
+  position: relative;
+  width: 5.75rem;
+  height: 2.75rem;
+  padding: 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.26);
+}
+
+.flavor-toggle:focus-visible {
+  outline: 0.18rem solid var(--cyan);
+  outline-offset: 0.18rem;
+}
+
+.flavor-toggle-knob {
+  display: block;
+  width: 2.05rem;
+  height: 2.05rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--hot), var(--orange));
+  box-shadow: 0 0.45rem 0.9rem rgba(0, 0, 0, 0.3), 0 0 0.9rem rgba(255, 46, 136, 0.42);
+  transition: transform 180ms ease-out, background 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.flavor-toggle.is-jokes .flavor-toggle-knob {
+  transform: translateX(2.95rem);
+  background: linear-gradient(135deg, var(--cyan), var(--acid));
+  box-shadow: 0 0.45rem 0.9rem rgba(0, 0, 0, 0.3), 0 0 0.9rem rgba(38, 219, 255, 0.42);
+}
+
+.flavor-label {
+  min-width: 0;
+  color: var(--cyan);
+  font-size: 1.25rem;
+  text-align: right;
+  text-transform: uppercase;
 }
 
 .mercy-header,

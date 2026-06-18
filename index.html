@@ -10,7 +10,7 @@
     <main class="app-shell">
       <section id="setup" class="setup-panel" aria-labelledby="setup-title">
         <div class="setup-copy">
-          <p class="eyebrow">v0.3</p>
+          <p class="eyebrow">v0.4</p>
           <h1
             id="setup-title"
             style="
@@ -35,6 +35,19 @@
           <div id="listTiles" class="list-tiles" role="list"></div>
           <p id="fileStatus" class="file-status" role="status"></p>
         </section>
+
+        <div class="flavor-card">
+          <button
+            id="flavorToggle"
+            class="flavor-toggle"
+            type="button"
+            aria-pressed="false"
+            aria-label="Switch message source"
+          >
+            <span class="flavor-toggle-knob" aria-hidden="true"></span>
+          </button>
+          <strong id="flavorLabel" class="flavor-label">Fortune</strong>
+        </div>
 
         <div class="mercy-card">
           <div class="mercy-header">
