@@ -1,6 +1,6 @@
-# Shuffle
+# Project Roulette
 
-Shuffle is a Windows Electron app for running randomized team-list rounds. It loads `.txt` lists, presents each list as a home-screen tile, shuffles the selected names, and steps through the round with animated target effects.
+Project Roulette is a Windows Electron app for running randomized team-list rounds. It loads `.txt` lists, presents each list as a home-screen tile, shuffles the selected names, and steps through the round with animated target effects.
 
 ## App Features
 
@@ -22,6 +22,11 @@ Shuffle is a Windows Electron app for running randomized team-list rounds. It lo
 ## Project Composition
 
 ```text
+build-version.ini
+run_Build.bat
+scripts/
+  sync-build-version.js
+
 desktop/
   main.js       Electron main process
   preload.js    Renderer bridge for app-specific desktop APIs
@@ -34,7 +39,7 @@ fortune-cookie-messages.json
 cat.png
 cat.gif
 yarn.svg
-name_shuffle_font/
+project_roulette_font/
 build/icon.ico
 
 lists/          Source team-list files
@@ -45,7 +50,7 @@ dist/           Generated build output
 
 `package.json` points Electron at `desktop/main.js`. The main process creates the desktop window, loads `index.html`, reads list files from disk, and exposes those results through IPC handlers.
 
-`desktop/preload.js` exposes a small `window.shuffleDesktop` API to the renderer:
+`desktop/preload.js` exposes a small `window.projectRouletteDesktop` API to the renderer:
 
 - `readTeamLists()` returns the `.txt` files found in `lists/`.
 - `readFortuneMessages()` returns the fortune message array from `fortune-cookie-messages.json`.
@@ -105,7 +110,25 @@ npm start
 
 The `ELECTRON_RUN_AS_NODE` line is useful in shells where Electron was previously forced into Node mode.
 
-## Build
+## Fast Build
+
+Run the root build batch file:
+
+```powershell
+.\run_Build.bat
+```
+
+The batch file changes into the repository root, clears `ELECTRON_RUN_AS_NODE`, and runs the project build script.
+
+The build version comes from `build-version.ini`:
+
+```ini
+version=0.4
+```
+
+The build sync step applies that value to the home-screen version label and the generated portable executable filename.
+
+## Manual Build
 
 Create the Windows build:
 
@@ -126,20 +149,24 @@ Generated outputs:
 
 ```text
 dist/
-  Shuffle 0.3.0.exe
+  Project-Roulette-0.4.exe
   lists/
   win-unpacked/
+    Project-Roulette-0.4.exe
 ```
 
-The portable executable name comes from `package.json`:
+The executable names are synced from `build-version.ini` into `package.json` before Electron Builder runs:
 
 ```json
+"win": {
+  "executableName": "Project-Roulette-0.4"
+},
 "portable": {
-  "artifactName": "Shuffle ${version}.exe"
+  "artifactName": "Project-Roulette-0.4.exe"
 }
 ```
 
-Update the top-level `"version"` in `package.json` when the generated executable filename should change.
+Update `build-version.ini` when the displayed app version and generated executable filename should change.
 
 ## Packaging Configuration
 
@@ -157,7 +184,7 @@ Packaged source files:
   "cat.gif",
   "yarn.svg",
   "build/icon.ico",
-  "name_shuffle_font/**/*",
+  "project_roulette_font/**/*",
   "desktop/**/*"
 ]
 ```
@@ -184,3 +211,9 @@ Windows targets:
 ```
 
 The app icon is `build/icon.ico`, and the app window icon is wired in `desktop/main.js`.
+
+## License
+
+Project Roulette is licensed under the PolyForm Noncommercial License 1.0.0.
+
+Noncommercial use is permitted with the required creator notice retained. Commercial use requires contacting VAvram for a separate license.

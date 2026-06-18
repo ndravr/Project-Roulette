@@ -1,10 +1,12 @@
 {
-  "name": "shuffle-desktop",
-  "version": "0.3.0",
+  "name": "project-roulette-desktop",
+  "version": "0.4.0",
   "private": true,
   "main": "desktop/main.js",
   "scripts": {
     "start": "electron .",
+    "sync-version": "node scripts/sync-build-version.js",
+    "prebuild": "node scripts/sync-build-version.js",
     "build": "electron-builder --win",
     "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path dist/lists) { Remove-Item dist/lists -Recurse -Force }; Copy-Item lists dist/lists -Recurse\""
   },
@@ -13,8 +15,8 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "local.shuffle.desktop",
-    "productName": "Shuffle",
+    "appId": "local.project-roulette.desktop",
+    "productName": "Project Roulette",
     "files": [
       "index.html",
       "script.js",
@@ -24,7 +26,7 @@
       "cat.gif",
       "yarn.svg",
       "build/icon.ico",
-      "name_shuffle_font/**/*",
+      "project_roulette_font/**/*",
       "desktop/**/*"
     ],
     "extraFiles": [
@@ -42,10 +44,11 @@
       "target": [
         "dir",
         "portable"
-      ]
+      ],
+      "executableName": "Project-Roulette-0.4"
     },
     "portable": {
-      "artifactName": "Shuffle ${version}.exe"
+      "artifactName": "Project-Roulette-0.4.exe"
     },
     "compression": "store",
     "asar": true,

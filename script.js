@@ -113,7 +113,7 @@ async function ensureFortunesLoaded() {
   }
 
   if (!fortuneLoadPromise) {
-    fortuneLoadPromise = window.shuffleDesktop.readFortuneMessages()
+    fortuneLoadPromise = window.projectRouletteDesktop.readFortuneMessages()
       .then((messages) => {
         if (!Array.isArray(messages) || !messages.length) {
           throw new Error("fortune source was empty");
@@ -261,7 +261,7 @@ function applyLoadedTeamLists(loadedLists) {
 }
 
 async function loadDesktopTeamLists() {
-  const loadedFiles = await window.shuffleDesktop.readTeamLists();
+  const loadedFiles = await window.projectRouletteDesktop.readTeamLists();
 
   applyLoadedTeamLists(
     loadedFiles
@@ -276,7 +276,7 @@ async function loadDesktopTeamLists() {
 }
 
 async function loadTeamLists() {
-  if (!window.shuffleDesktop) {
+  if (!window.projectRouletteDesktop) {
     applyLoadedTeamLists([]);
     return;
   }
