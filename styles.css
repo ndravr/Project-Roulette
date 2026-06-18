@@ -320,7 +320,9 @@ input[type="range"] {
 
 .blaster-wrap {
   position: relative;
+  z-index: 3;
   min-height: clamp(10rem, 38vh, 21rem);
+  pointer-events: none;
 }
 
 .blaster {
@@ -513,22 +515,25 @@ input[type="range"] {
 
 .shot-beam {
   position: absolute;
+  z-index: 4;
   left: 80%;
   top: 63%;
-  width: min(45vw, 32rem);
-  height: 0.4rem;
+  width: clamp(1.7rem, 4.4vw, 2.8rem);
+  aspect-ratio: 1;
   opacity: 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #fff, var(--acid), var(--hot), transparent);
-  box-shadow: 0 0 1rem var(--hot), 0 0 2rem var(--cyan);
+  background: url("yarn.svg") center / contain no-repeat;
+  filter: drop-shadow(0 0 0.45rem rgba(248, 113, 255, 0.85));
+  transform: translate(-50%, -50%);
+  will-change: opacity, transform;
 }
 
 .shot-beam.is-on {
-  animation: beam 240ms ease-out;
+  animation: yarnShot 832ms linear forwards;
 }
 
 .target-zone {
   position: relative;
+  z-index: 1;
   display: grid;
   gap: 1rem;
   place-items: center;
@@ -592,8 +597,8 @@ input[type="range"] {
 
 .spark {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: var(--burst-x, 50%);
+  top: var(--burst-y, 50%);
   width: 0.65rem;
   height: 0.65rem;
   border-radius: 50%;
@@ -604,8 +609,8 @@ input[type="range"] {
 
 .comic-explosion {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: var(--burst-x, 50%);
+  top: var(--burst-y, 50%);
   width: min(72vw, 31rem);
   aspect-ratio: 1.45;
   opacity: 0;
@@ -750,12 +755,6 @@ input[type="range"] {
   color: var(--acid);
 }
 
-.name-queue li:nth-child(2) span,
-.name-queue li:nth-child(3) span {
-  background: #0f53d7;
-  color: #fff;
-}
-
 .controls {
   grid-column: 1 / -1;
   display: flex;
@@ -845,10 +844,21 @@ kbd {
   100% { opacity: 0; transform: scale(0.1); }
 }
 
-@keyframes beam {
-  0% { opacity: 0; transform: scaleX(0); transform-origin: left; }
-  35% { opacity: 1; transform: scaleX(1); transform-origin: left; }
-  100% { opacity: 0; transform: scaleX(1.08); transform-origin: left; }
+@keyframes yarnShot {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.65) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--shot-x, 0px)), calc(-50% + var(--shot-y, 0px))) scale(1) rotate(1080deg);
+  }
 }
 
 @keyframes nameHit {
@@ -913,10 +923,6 @@ kbd {
 
   .target-zone {
     min-height: 15rem;
-  }
-
-  .shot-beam {
-    width: 42vw;
   }
 
   .queue-panel {

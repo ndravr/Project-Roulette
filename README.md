@@ -54,6 +54,7 @@ fortune-cookie-messages.json
 
 cat.png
 cat.gif
+yarn.svg
 name_shuffle_font/
 
 lists/          Source list files
@@ -76,7 +77,8 @@ prompt or a background server.
 `npm run build` runs `electron-builder --win`. The `build.files` section in
 `package.json` tells Electron Builder which source files and assets to package:
 `index.html`, `script.js`, `styles.css`, `fortune-cookie-messages.json`,
-`cat.png`, `cat.gif`, the icon, the font, and the `desktop/` Electron files.
+`cat.png`, `cat.gif`, `yarn.svg`, the icon, the font, and the `desktop/`
+Electron files.
 The `extraFiles` section copies `lists/` beside the packaged executable so
 users can edit team lists after the app is built.
 

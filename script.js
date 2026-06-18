@@ -21,6 +21,8 @@ const IDLE_GUN_SRC = "cat.png";
 const FIRING_GUN_SRC = "cat.gif";
 const FIRE_ANIMATION_MS = 1000;
 const PROJECTILE_DELAY_MS = 420;
+const PROJECTILE_TRAVEL_MS = 832;
+const NAME_HIDE_AFTER_IMPACT_MS = 90;
 const EXPLOSION_MS = 820;
 
 let allNames = [];
@@ -290,7 +292,7 @@ function updateMercyDisplay() {
 }
 
 function updateFireButton() {
-  fireButton.textContent = roundComplete ? "Go to Home" : "Fire next";
+  fireButton.textContent = roundComplete ? "Go to Home" : "Next";
   fireButton.disabled = isFiring;
 }
 
@@ -381,8 +383,50 @@ function restartAnimation(element, className) {
   element.classList.add(className);
 }
 
+function aimProjectileAtCurrentName() {
+  shotBeam.classList.remove("is-on");
+  void shotBeam.offsetWidth;
+
+  const projectileRect = shotBeam.getBoundingClientRect();
+  const targetRect = currentName.getBoundingClientRect();
+  const projectileCenterX = projectileRect.left + projectileRect.width / 2;
+  const projectileCenterY = projectileRect.top + projectileRect.height / 2;
+  const targetCenterX = targetRect.left + targetRect.width / 2;
+  const targetCenterY = targetRect.top + targetRect.height / 2;
+
+  shotBeam.style.setProperty("--shot-x", `${targetCenterX - projectileCenterX}px`);
+  shotBeam.style.setProperty("--shot-y", `${targetCenterY - projectileCenterY}px`);
+}
+
+function setBurstOriginFromCurrentName() {
+  const burstRect = burst.getBoundingClientRect();
+  const targetRect = currentName.getBoundingClientRect();
+  const targetCenterX = targetRect.left + targetRect.width / 2;
+  const targetCenterY = targetRect.top + targetRect.height / 2;
+
+  burst.style.setProperty("--burst-x", `${targetCenterX - burstRect.left}px`);
+  burst.style.setProperty("--burst-y", `${targetCenterY - burstRect.top}px`);
+}
+
+function completeProjectileImpact(currentShot) {
+  if (currentShot !== shotSequence) {
+    return;
+  }
+
+  createBurst();
+
+  window.setTimeout(() => {
+    if (currentShot !== shotSequence) {
+      return;
+    }
+
+    currentName.classList.add("is-hidden-target");
+  }, NAME_HIDE_AFTER_IMPACT_MS);
+}
+
 function createBurst() {
   burst.innerHTML = "";
+  setBurstOriginFromCurrentName();
   const colors = ["#ff2e88", "#b7ff2a", "#26dbff", "#ffad33", "#9a57ff", "#ffffff"];
   const explosion = document.createElement("span");
 
@@ -446,9 +490,9 @@ function fireNext() {
       return;
     }
 
-    currentName.classList.add("is-hidden-target");
+    aimProjectileAtCurrentName();
+    shotBeam.addEventListener("animationend", () => completeProjectileImpact(currentShot), { once: true });
     restartAnimation(shotBeam, "is-on");
-    createBurst();
   }, PROJECTILE_DELAY_MS);
 
   window.setTimeout(() => {
@@ -467,7 +511,7 @@ function fireNext() {
     currentIndex += 1;
     isFiring = false;
     renderRound();
-  }, Math.max(FIRE_ANIMATION_MS, PROJECTILE_DELAY_MS + EXPLOSION_MS));
+  }, Math.max(FIRE_ANIMATION_MS, PROJECTILE_DELAY_MS + PROJECTILE_TRAVEL_MS + EXPLOSION_MS));
 }
 
 mercySlider.addEventListener("input", updateMercyDisplay);
