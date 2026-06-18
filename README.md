@@ -223,4 +223,4 @@ The app icon is `build/icon.ico`, and the app window icon is wired in `desktop/m
 
 Project Roulette is licensed under the PolyForm Noncommercial License 1.0.0.
 
-Noncommercial use is permitted with the required creator notice retained. Commercial use requires contacting VAvram for a separate license.
+Noncommercial use is permitted with the required creator notice retained. Commercial use requires contacting Andrei Avram for a separate license.

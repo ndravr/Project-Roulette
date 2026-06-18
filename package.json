@@ -8,7 +8,7 @@
     "sync-version": "node scripts/sync-build-version.js",
     "prebuild": "node scripts/sync-build-version.js",
     "build": "electron-builder --win",
-    "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path dist/lists) { Remove-Item dist/lists -Recurse -Force }; Copy-Item lists dist/lists -Recurse\""
+    "postbuild": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path dist/lists) { Remove-Item dist/lists -Recurse -Force }; Copy-Item lists dist/lists -Recurse; foreach ($path in @('dist/builder-debug.yml', 'dist/builder-effective-config.yaml')) { if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force } }\""
   },
   "devDependencies": {
     "electron": "^31.7.7",
