@@ -309,6 +309,7 @@ function startRound() {
   resetFortuneRound();
   shotSequence += 1;
   burst.innerHTML = "";
+  clearProjectile();
   blasterImage.src = IDLE_GUN_SRC;
 
   setup.classList.add("is-hidden");
@@ -329,6 +330,7 @@ function resetRound() {
   roundComplete = false;
   resetFortuneRound();
   shotSequence += 1;
+  clearProjectile();
   updateFireButton();
 }
 
@@ -381,6 +383,15 @@ function restartAnimation(element, className) {
   element.classList.remove(className);
   void element.offsetWidth;
   element.classList.add(className);
+}
+
+function clearProjectile() {
+  shotBeam.classList.remove("is-on");
+  shotBeam.style.removeProperty("--shot-x");
+  shotBeam.style.removeProperty("--shot-y");
+  burst.style.removeProperty("--burst-x");
+  burst.style.removeProperty("--burst-y");
+  void shotBeam.offsetWidth;
 }
 
 function aimProjectileAtCurrentName() {
