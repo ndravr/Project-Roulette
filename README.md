@@ -36,6 +36,8 @@ script.js       Renderer behavior and round state
 styles.css      UI styling and animation rules
 
 fortune-cookie-messages.json
+shown-jokes/
+  shown-jokes.json
 cat.png
 cat.gif
 yarn.svg
@@ -92,6 +94,11 @@ Jokes mode:
 - Calls `https://v2.jokeapi.dev/joke/Programming?safe-mode`.
 - Supports both single-part and two-part JokeAPI responses.
 - Uses a sequence guard so stale async responses cannot overwrite newer round text.
+- Records displayed jokes in `shown-jokes/shown-jokes.json`.
+- Skips jokes already shown in the current session or recorded in `shown-jokes/shown-jokes.json`.
+- Prefetches the next joke while the current name is displayed.
+
+`shown-jokes/shown-jokes.json` is stored at the repository root when the app is run from this checkout. Delete that file to reset the persistent joke history. The app recreates the file automatically.
 
 ## Development
 

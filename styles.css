@@ -621,6 +621,7 @@ input[type="range"] {
 .fortune {
   position: relative;
   z-index: 1;
+  min-width: 0;
   width: min(34rem, 100%);
   padding: 0.8rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -630,7 +631,10 @@ input[type="range"] {
   font-size: clamp(0.92rem, 1.7vw, 1rem);
   font-weight: 700;
   line-height: 1.45;
+  overflow-wrap: anywhere;
   text-align: center;
+  white-space: normal;
+  word-break: break-word;
   box-shadow: 0 0.8rem 1.8rem rgba(0, 0, 0, 0.24);
 }
 

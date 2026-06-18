@@ -1,0 +1,36 @@
+directories:
+  output: dist
+  buildResources: build
+appId: local.project-roulette.desktop
+productName: Project Roulette
+files:
+  - filter:
+      - index.html
+      - script.js
+      - styles.css
+      - fortune-cookie-messages.json
+      - cat.png
+      - cat.gif
+      - yarn.svg
+      - build/icon.ico
+      - project_roulette_font/**/*
+      - desktop/**/*
+extraFiles:
+  - from: lists
+    to: lists
+    filter:
+      - '**/*.txt'
+win:
+  icon: build/icon.ico
+  signAndEditExecutable: false
+  target:
+    - dir
+    - portable
+  executableName: Project-Roulette-0.5
+portable:
+  artifactName: Project-Roulette-0.5.exe
+compression: store
+asar: true
+npmRebuild: false
+nodeGypRebuild: false
+electronVersion: 31.7.7

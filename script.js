@@ -40,6 +40,7 @@ const MESSAGE_FLAVORS = {
   }
 };
 const JOKE_API_URL = "https://v2.jokeapi.dev/joke/Programming?safe-mode";
+const MAX_UNIQUE_JOKE_FETCH_ATTEMPTS = 30;
 
 let allNames = [];
 let shuffledNames = [];
@@ -57,6 +58,10 @@ let remainingFortuneMessages = [];
 let fortuneSequence = 0;
 let roundComplete = false;
 let activeMessageFlavor = "fortune";
+let shownJokesThisSession = new Set();
+let prefetchedJokesByIndex = new Map();
+let jokePrefetchPromisesByIndex = new Map();
+let jokeRoundId = 0;
 
 const firingGunPreload = new Image();
 firingGunPreload.src = FIRING_GUN_SRC;
@@ -145,6 +150,12 @@ function resetFortuneRound() {
   fortuneSequence += 1;
 }
 
+function resetJokeRound() {
+  prefetchedJokesByIndex = new Map();
+  jokePrefetchPromisesByIndex = new Map();
+  jokeRoundId += 1;
+}
+
 function pickUnusedFortune(fortunes) {
   if (!remainingFortuneMessages.length) {
     remainingFortuneMessages = shuffle(
@@ -195,7 +206,27 @@ function parseJoke(data) {
   return "";
 }
 
-async function loadJoke(currentFortuneSequence) {
+function normalizeJokeText(joke) {
+  return String(joke || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+async function readPersistedShownJokeKeys() {
+  if (!window.projectRouletteDesktop?.readShownJokes) {
+    return [];
+  }
+
+  const store = await window.projectRouletteDesktop.readShownJokes();
+  const jokes = Array.isArray(store?.jokes) ? store.jokes : [];
+
+  return jokes
+    .map((entry) => normalizeJokeText(entry.normalizedJoke || entry.joke))
+    .filter(Boolean);
+}
+
+async function fetchProgrammingJoke() {
   const response = await fetch(JOKE_API_URL);
 
   if (!response.ok) {
@@ -204,11 +235,125 @@ async function loadJoke(currentFortuneSequence) {
 
   const joke = parseJoke(await response.json());
 
-  if (currentFortuneSequence !== fortuneSequence) {
+  if (!joke) {
+    throw new Error("Joke API returned an empty joke.");
+  }
+
+  return joke;
+}
+
+async function fetchUniqueJoke() {
+  const unavailableJokes = new Set(shownJokesThisSession);
+
+  try {
+    const persistedJokes = await readPersistedShownJokeKeys();
+
+    persistedJokes.forEach((jokeKey) => unavailableJokes.add(jokeKey));
+  } catch {
+    // A missing or reset history file should not block joke mode.
+  }
+
+  for (let attempt = 0; attempt < MAX_UNIQUE_JOKE_FETCH_ATTEMPTS; attempt += 1) {
+    const joke = await fetchProgrammingJoke();
+    const normalizedJoke = normalizeJokeText(joke);
+
+    if (normalizedJoke && !unavailableJokes.has(normalizedJoke)) {
+      return {
+        joke,
+        normalizedJoke
+      };
+    }
+
+    if (normalizedJoke) {
+      unavailableJokes.add(normalizedJoke);
+    }
+  }
+
+  throw new Error("Could not fetch a new programming joke.");
+}
+
+async function recordDisplayedJoke(jokeRecord, listName) {
+  if (!jokeRecord?.normalizedJoke) {
     return;
   }
 
-  fortune.textContent = joke || "The joke API returned an empty joke.";
+  shownJokesThisSession.add(jokeRecord.normalizedJoke);
+
+  if (!window.projectRouletteDesktop?.recordShownJoke) {
+    return;
+  }
+
+  try {
+    await window.projectRouletteDesktop.recordShownJoke({
+      joke: jokeRecord.joke,
+      normalizedJoke: jokeRecord.normalizedJoke,
+      listName
+    });
+  } catch {
+    // Display should continue even if the persistent history cannot be written.
+  }
+}
+
+function prefetchJokeForIndex(index, listName) {
+  if (
+    index >= activeNames.length
+    || prefetchedJokesByIndex.has(index)
+    || jokePrefetchPromisesByIndex.has(index)
+  ) {
+    return;
+  }
+
+  const currentJokeRoundId = jokeRoundId;
+  const prefetchPromise = fetchUniqueJoke()
+    .then((jokeRecord) => {
+      if (currentJokeRoundId === jokeRoundId) {
+        prefetchedJokesByIndex.set(index, jokeRecord);
+      }
+
+      return jokeRecord;
+    })
+    .catch(() => null)
+    .finally(() => {
+      if (currentJokeRoundId === jokeRoundId) {
+        jokePrefetchPromisesByIndex.delete(index);
+      }
+    });
+
+  jokePrefetchPromisesByIndex.set(index, prefetchPromise);
+}
+
+async function getJokeForIndex(index) {
+  if (prefetchedJokesByIndex.has(index)) {
+    const jokeRecord = prefetchedJokesByIndex.get(index);
+
+    prefetchedJokesByIndex.delete(index);
+    return jokeRecord;
+  }
+
+  if (jokePrefetchPromisesByIndex.has(index)) {
+    const jokeRecord = await jokePrefetchPromisesByIndex.get(index);
+
+    prefetchedJokesByIndex.delete(index);
+    if (jokeRecord) {
+      return jokeRecord;
+    }
+  }
+
+  return fetchUniqueJoke();
+}
+
+async function loadJoke(currentFortuneSequence) {
+  const jokeIndex = currentIndex;
+  const listName = namesSourceLabel || "Unknown list";
+  const jokeRecord = await getJokeForIndex(jokeIndex);
+
+  if (currentFortuneSequence !== fortuneSequence || jokeIndex !== currentIndex) {
+    return;
+  }
+
+  fortune.textContent = jokeRecord.joke;
+  await recordDisplayedJoke(jokeRecord, listName);
+  prefetchJokeForIndex(jokeIndex + 1, listName);
 }
 
 async function loadFortune() {
@@ -382,6 +527,7 @@ function startRound() {
   isFiring = false;
   roundComplete = false;
   resetFortuneRound();
+  resetJokeRound();
   shotSequence += 1;
   burst.innerHTML = "";
   clearProjectile();
@@ -404,6 +550,7 @@ function resetRound() {
   isFiring = false;
   roundComplete = false;
   resetFortuneRound();
+  resetJokeRound();
   shotSequence += 1;
   clearProjectile();
   updateFireButton();

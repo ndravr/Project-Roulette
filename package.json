@@ -1,6 +1,6 @@
 {
   "name": "project-roulette-desktop",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "main": "desktop/main.js",
   "scripts": {
@@ -45,10 +45,10 @@
         "dir",
         "portable"
       ],
-      "executableName": "Project-Roulette-0.4"
+      "executableName": "Project-Roulette-0.5"
     },
     "portable": {
-      "artifactName": "Project-Roulette-0.4.exe"
+      "artifactName": "Project-Roulette-0.5.exe"
     },
     "compression": "store",
     "asar": true,
