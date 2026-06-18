@@ -1,93 +1,94 @@
 # Shuffle
 
-Shuffle is a portable Windows Electron app for loading `.txt` team lists and running a randomized name round.
+Shuffle is a Windows Electron app for running randomized team-list rounds. It loads `.txt` lists, presents each list as a home-screen tile, shuffles the selected names, and steps through the round with animated target effects.
 
-The app is no longer intended to run by double-clicking `index.html` in a browser. It runs through Electron so it can read the local `lists` folder automatically without a server or browser permission prompt.
+## App Features
 
-## Share The App
+- Team-list tiles are generated from `.txt` files in `lists/`.
+- Each list file uses one name per line.
+- Blank lines and lines beginning with `#` are ignored.
+- The selected list is shuffled at the start of each round.
+- Mercy Level controls how many upcoming names are visible in the queue.
+- The round keeps the full shuffled list; Mercy Level only changes the visible queue window.
+- The Fortune/Jokes toggle switches the flavor text shown with each active name.
+- Fortune mode uses `fortune-cookie-messages.json`.
+- Jokes mode fetches safe programming jokes from JokeAPI.
+- `Next` advances through the round with the animated cat/yarn target effect.
+- At the end of a round, the button changes to `Go to Home`.
+- Keyboard controls:
+  - `Space` or `Enter`: advance the round
+  - `Q` or `Esc`: return home
 
-Fast launch option:
-
-```text
-dist/win-unpacked/
-  Shuffle.exe
-  lists/
-```
-
-Send the whole `win-unpacked` folder and have users double-click `Shuffle.exe`. This is the fastest version because it does not self-extract at startup.
-
-Single-file portable option:
-
-```text
-dist/
-  Shuffle 0.3.0.exe
-  lists/
-```
-
-The single exe is easier to copy, but it can take a few seconds to start because Electron portable executables unpack themselves before launching. Keep `lists` beside it.
-
-To add or remove tiles, edit the `.txt` files in `dist/lists` and reopen the app.
-
-## Edit Lists
-
-Source lists live in:
-
-```text
-lists/
-```
-
-Each `.txt` file becomes one tile. Put one name per line. Blank lines are ignored. Lines starting with `#` are ignored.
-
-After rebuilding, the build script copies `lists/` into `dist/lists/`.
-
-## Project Structure
+## Project Composition
 
 ```text
 desktop/
-  main.js       Electron main process, reads lists from disk
-  preload.js    Safe bridge exposed to the web UI
+  main.js       Electron main process
+  preload.js    Renderer bridge for app-specific desktop APIs
 
-index.html      Renderer markup
-script.js       Renderer app logic
-styles.css      Renderer styles
+index.html      Home screen and arena markup
+script.js       Renderer behavior and round state
+styles.css      UI styling and animation rules
+
 fortune-cookie-messages.json
-
 cat.png
 cat.gif
 yarn.svg
 name_shuffle_font/
+build/icon.ico
 
-lists/          Source list files
-dist/           Shareable portable output
+lists/          Source team-list files
+dist/           Generated build output
 ```
 
-## How The App Is Generated
+## Runtime Architecture
 
-The visible app is the web UI in `index.html`, `script.js`, and `styles.css`.
-Electron does not convert those files into a different framework. It opens
-`index.html` inside a desktop window, loads `styles.css` for the visuals, and
-runs `script.js` for the shuffle behavior.
+`package.json` points Electron at `desktop/main.js`. The main process creates the desktop window, loads `index.html`, reads list files from disk, and exposes those results through IPC handlers.
 
-`desktop/main.js` is the Electron entry point from `package.json`. It creates
-the desktop window, loads `index.html`, and reads `.txt` files from the local
-`lists` folder. `desktop/preload.js` exposes that list-reading function safely
-to the renderer, so the web UI can use local files without a browser permission
-prompt or a background server.
+`desktop/preload.js` exposes a small `window.shuffleDesktop` API to the renderer:
 
-`npm run build` runs `electron-builder --win`. The `build.files` section in
-`package.json` tells Electron Builder which source files and assets to package:
-`index.html`, `script.js`, `styles.css`, `fortune-cookie-messages.json`,
-`cat.png`, `cat.gif`, `yarn.svg`, the icon, the font, and the `desktop/`
-Electron files.
-The `extraFiles` section copies `lists/` beside the packaged executable so
-users can edit team lists after the app is built.
+- `readTeamLists()` returns the `.txt` files found in `lists/`.
+- `readFortuneMessages()` returns the fortune message array from `fortune-cookie-messages.json`.
 
-Fortunes are loaded from `fortune-cookie-messages.json`, which was copied from
-the raw GitHub fortune-cookie source. During a round, the app remembers which
-fortune messages were already shown and only chooses from messages that have
-not been used in that round.
+The renderer files are the actual application UI:
 
-## Build
+- `index.html` defines the setup screen, list library, Fortune/Jokes tile, Mercy Level tile, arena, queue, and controls.
+- `styles.css` defines the visual theme, tile layout, responsive behavior, slider styling, and arena animations.
+- `script.js` owns list selection, shuffling, Mercy Level behavior, round progression, fortune/joke loading, keyboard controls, and animation timing.
+
+## Team Lists
+
+Add or edit source lists in `lists/`.
+
+Example:
+
+```text
+Alice
+Bob
+Charlie
+# This line is ignored
+Diana
+```
+
+Every `.txt` file becomes one selectable tile on the home screen. Rebuild the app after changing source lists if the packaged output should include the updated files.
+
+## Flavor Text
+
+The Fortune/Jokes tile controls which text source is used during a round.
+
+Fortune mode:
+
+- Reads from `fortune-cookie-messages.json`.
+- Deduplicates and trims messages in memory.
+- Avoids repeating a fortune within the same round until the unused pool is exhausted.
+
+Jokes mode:
+
+- Calls `https://v2.jokeapi.dev/joke/Programming?safe-mode`.
+- Supports both single-part and two-part JokeAPI responses.
+- Uses a sequence guard so stale async responses cannot overwrite newer round text.
+
+## Development
 
 Install dependencies:
 
@@ -95,38 +96,91 @@ Install dependencies:
 npm install
 ```
 
-Build the portable Windows app:
-
-```powershell
-npm run build
-```
-
-Output:
-
-```text
-dist/
-  Shuffle 0.3.0.exe
-  win-unpacked/
-  lists/
-```
-
-`node_modules/` is generated and can be deleted after building. Keep `dist/win-unpacked/` if you want the fast-launch distributable.
-
-## Run During Development
-
-After `npm install`:
+Run the Electron app:
 
 ```powershell
 $env:ELECTRON_RUN_AS_NODE=$null
 npm start
 ```
 
-The app reads from the source `lists/` folder in development.
+The `ELECTRON_RUN_AS_NODE` line is useful in shells where Electron was previously forced into Node mode.
 
-## Notes
+## Build
 
-- No server is required.
-- Users do not need Node, npm, or Electron installed.
-- The app reads `.txt` files from `lists` next to the portable executable when packaged.
-- If the portable exe is rebuilt, share the new exe together with the updated `dist/lists` folder.
-- If startup speed matters most, share `dist/win-unpacked/` instead of the single portable exe.
+Create the Windows build:
+
+```powershell
+$env:ELECTRON_RUN_AS_NODE=$null
+npm run build
+```
+
+The build script runs:
+
+```text
+electron-builder --win
+```
+
+Then `postbuild` refreshes `dist/lists/` from the source `lists/` folder.
+
+Generated outputs:
+
+```text
+dist/
+  Shuffle 0.3.0.exe
+  lists/
+  win-unpacked/
+```
+
+The portable executable name comes from `package.json`:
+
+```json
+"portable": {
+  "artifactName": "Shuffle ${version}.exe"
+}
+```
+
+Update the top-level `"version"` in `package.json` when the generated executable filename should change.
+
+## Packaging Configuration
+
+Electron Builder is configured in the `build` section of `package.json`.
+
+Packaged source files:
+
+```json
+"files": [
+  "index.html",
+  "script.js",
+  "styles.css",
+  "fortune-cookie-messages.json",
+  "cat.png",
+  "cat.gif",
+  "yarn.svg",
+  "build/icon.ico",
+  "name_shuffle_font/**/*",
+  "desktop/**/*"
+]
+```
+
+External list files:
+
+```json
+"extraFiles": [
+  {
+    "from": "lists",
+    "to": "lists",
+    "filter": ["**/*.txt"]
+  }
+]
+```
+
+Windows targets:
+
+```json
+"target": [
+  "dir",
+  "portable"
+]
+```
+
+The app icon is `build/icon.ico`, and the app window icon is wired in `desktop/main.js`.
