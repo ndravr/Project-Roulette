@@ -2,6 +2,11 @@
 
 Project Roulette is a Windows Electron app for running randomized team-list rounds. It loads `.txt` lists, presents each list as a home-screen tile, shuffles the selected names, and steps through the round with animated target effects.
 
+## Pictures
+![Project screenshot](pres/p1.png)
+![Project screenshot](pres/p2.png)
+![Project screenshot](pres/p3.png)
+
 ## App Features
 
 - Team-list tiles are generated from `.txt` files in `lists/`.
@@ -18,6 +23,7 @@ Project Roulette is a Windows Electron app for running randomized team-list roun
 - Keyboard controls:
   - `Space` or `Enter`: advance the round
   - `Q` or `Esc`: return home
+
 
 ## Project Composition
 
